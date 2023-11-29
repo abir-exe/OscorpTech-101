@@ -31,6 +31,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     const userCollection = client.db("oscorpTech").collection("users");
+    const assetCollection = client.db("oscorpTech").collection("assets");
 
 
     
@@ -53,6 +54,32 @@ async function run() {
         res.send(result);
       });
 
+      app.patch(
+        "/users/admin/:id",
+        async (req, res) => {
+          const id = req.params.id;
+          const filter = { _id: new ObjectId(id) };
+          const updatedDoc = {
+            $set: {
+              role: "admin",
+            },
+          };
+          const result = await userCollection.updateOne(filter, updatedDoc);
+          res.send(result);
+        }
+      );
+
+      //asset related api
+      app.get("/assets", async (req, res) => {
+        const result = await assetCollection.find().toArray();
+        res.send(result);
+      });
+
+      app.post("/assets", async (req, res) => {
+        const item = req.body;
+        const result = await assetCollection.insertOne(item);
+        res.send(result);
+      });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
