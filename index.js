@@ -33,6 +33,7 @@ async function run() {
     // await client.connect();
     const userCollection = client.db("oscorpTech").collection("users");
     const assetCollection = client.db("oscorpTech").collection("assets");
+    const customRequestsCollection = client.db("oscorpTech").collection("customRequests");
 
     // jwt related api
     app.post("/jwt", async (req, res) => {
@@ -45,7 +46,7 @@ async function run() {
 
     // middlewares
     const verifyToken = (req, res, next) => {
-        console.log("inside verify token", req.headers);
+        console.log("inside verify token", req.headers.authorization);
         if (!req.headers.authorization) {
           return res.status(401).send({ message: "forbidden access" });
         }
@@ -59,9 +60,21 @@ async function run() {
         });
       };
 
+      //use verify admin after verify token
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const isAdmin = user?.role === "admin";
+      if (!isAdmin) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
+
     
     //user related api
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyToken, async (req, res) => {
         const result = await userCollection.find().toArray();
         res.send(result);
       });
@@ -84,8 +97,6 @@ async function run() {
 
     app.post("/users", async (req, res) => {
         const user = req.body;
-        //insert email if user dosent exist
-        // you can do this in many ways . 1. email unique, 2. upsert 3. simple checking
         const query = { email: user.email };
         const existingUser = await userCollection.findOne(query);
         if (existingUser) {
@@ -121,6 +132,24 @@ async function run() {
         const result = await assetCollection.insertOne(item);
         res.send(result);
       });
+
+      //custom request related api
+
+      app.get("/customRequests", async (req, res) => {
+        const email = req.query.email;
+        const query = { email: email };
+        const result = await customRequestsCollection.find(query).toArray();
+        res.send(result);
+      });
+
+      app.post("/customRequests", async (req, res) => {
+        const item = req.body;
+        const result = await customRequestsCollection.insertOne(item);
+        res.send(result);
+      });
+
+
+
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
