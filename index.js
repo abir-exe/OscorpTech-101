@@ -34,6 +34,7 @@ async function run() {
     const userCollection = client.db("oscorpTech").collection("users");
     const assetCollection = client.db("oscorpTech").collection("assets");
     const customRequestsCollection = client.db("oscorpTech").collection("customRequests");
+    const allRequestsCollection = client.db("oscorpTech").collection("allRequests");
 
     // jwt related api
     app.post("/jwt", async (req, res) => {
@@ -135,10 +136,15 @@ async function run() {
 
       //custom request related api
 
+      // app.get("/customRequests", async (req, res) => {
+      //   const email = req.query.email;
+      //   const query = { email: email };
+      //   const result = await customRequestsCollection.find(query).toArray();
+      //   res.send(result);
+      // });
+
       app.get("/customRequests", async (req, res) => {
-        const email = req.query.email;
-        const query = { email: email };
-        const result = await customRequestsCollection.find(query).toArray();
+        const result = await customRequestsCollection.find().toArray();
         res.send(result);
       });
 
@@ -148,7 +154,18 @@ async function run() {
         res.send(result);
       });
 
+      //All Requested related api
 
+      app.post("/allRequests", async (req, res) => {
+        const item = req.body;
+        const result = await allRequestsCollection.insertOne(item);
+        res.send(result);
+      });
+
+      app.get("/allRequests", async (req, res) => {
+        const result = await allRequestsCollection.find().toArray();
+        res.send(result);
+      });
 
 
     // Send a ping to confirm a successful connection
